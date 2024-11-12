@@ -19,21 +19,17 @@ public class Program
         {
             alg = "HS256",
             kid = KeyID,
-            signdate = DateTime.Now.Date,
+            signdate = DateTime.Now,
         };
 
-        string number = "1";
+        string number = "4000 0012 3456 7899";
 
-        //Payload payload = new Payload()
-        //{
-        //    CardInfo = new CardInfo()
-        //    {
-        //        Pan = number
-        //    }
-        //};
-        var payload = new
+        Payload payload = new Payload()
         {
-            EchoMessage = "TestMessage"
+            CardInfo = new CardInfo()
+            {
+                Pan = number
+            }
         };
 
         var jws = MakeJws(protect, payload, SharedKey);
@@ -44,12 +40,15 @@ public class Program
 
         restRequest.AddBody(jws);
 
-        var responce = restClient.ExecuteAsync(restRequest).Result;
+        var responce = restClient.ExecuteAsync<Answer>(restRequest).Result;
 
-        Console.WriteLine(responce.Content);
-        if (!responce.IsSuccessful)
+        if (!responce.IsSuccessful || responce.Data.Error != null)
         {
-            Console.WriteLine(responce.Content);
+            Console.WriteLine("Unsuccessfully");
+        }
+        else
+        {
+            Console.WriteLine("Successfully");
         }
     }
 

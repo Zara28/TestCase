@@ -12,5 +12,13 @@ namespace TestCase.Models
         public CardInfo Info { get; set; }
 
         public string Status { get; set; }
+        public Error Error { get; set; }
+    }
+
+    public class Error
+    {
+        public string Code { get; set; }
+
+        public string Message { get; set; }
     }
 }

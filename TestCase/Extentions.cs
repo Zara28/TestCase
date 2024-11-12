@@ -40,13 +40,13 @@ namespace TestCase
         {
             ASCIIEncoding encoding = new();
             var cipherText = $"{signature.Base64Header}.{signature.Base64Payload}";
-            HMACSHA256 hmacSha256 = new HMACSHA256(Encoding.UTF8.GetBytes(signature.SecretKey));
+            HMACSHA256 hmacSha256 = new HMACSHA256(encoding.GetBytes(signature.SecretKey));
 
             var result = encoding.GetString(encoding.GetBytes(cipherText));
 
             var hashResult = hmacSha256.ComputeHash(Encoding.UTF8.GetBytes(result));
 
-            return Base64UrlEncode(hashResult);
+            return hashResult.Base64UrlEncode();
         }
 
     }
