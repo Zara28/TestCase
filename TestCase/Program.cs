@@ -10,23 +10,23 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        string host = "";
-        string url = $"";
-        string KeyID = "";
-        string SharedKey = "";
+        string host = "acstopay.online";
+        string url = $"https://{host}/api/testassignments/pan";
+        string KeyID = "47e8fde35b164e888a57b6ff27ec020f";
+        string SharedKey = "ac/1LUdrbivclAeP67iDKX2gPTTNmP0DQdF+0LBcPE/3NWwUqm62u5g6u+GE8uev5w/VMowYXN8ZM+gWPdOuzg==";
 
-        Protected protect = new Protected()
+        var protect = new Protected
         {
             alg = "HS256",
             kid = KeyID,
-            signdate = DateTime.Now,
+            signdate = DateTime.Now
         };
 
-        string number = "4000 0012 3456 7899";
+        string number = "4000001234567899";
 
-        Payload payload = new Payload()
+        var payload = new Payload
         {
-            CardInfo = new CardInfo()
+            CardInfo = new ()
             {
                 Pan = number
             }
@@ -34,7 +34,7 @@ public class Program
 
         var jws = MakeJws(protect, payload, SharedKey);
 
-        RestClient restClient = new(url, configureSerialization: s => s.UseNewtonsoftJson());
+        RestClient restClient = new(url);
 
         var restRequest = new RestRequest(url, Method.Post);
 
@@ -42,7 +42,7 @@ public class Program
 
         var responce = restClient.ExecuteAsync<Answer>(restRequest).Result;
 
-        if (!responce.IsSuccessful || responce.Data.Error != null)
+        if (!responce.IsSuccessful || responce.Data?.Error != null)
         {
             Console.WriteLine("Unsuccessfully");
         }
@@ -59,17 +59,21 @@ public class Program
         var headJson = JsonConvert.SerializeObject(header);
         var payloadJson = JsonConvert.SerializeObject(payload);
 
+        var encodingHeader = encoding.GetBytes(headJson).Base64UrlEncode();
+        var encodingPayload = payloadJson.Base64UrlEncode();
+
         var sign = new Signature
         {
-            Base64Header = encoding.GetString(encoding.GetBytes(headJson)).Base64UrlEncode(),
-            Base64Payload = payloadJson.Base64UrlEncode(),
+            Base64Header = encodingHeader,
+            Base64Payload = encodingPayload,
             SecretKey = secretKey
         };
 
         var signature = sign.GenerateSignature();
 
-        return $"{headJson.Base64UrlEncode()}.{payloadJson.Base64UrlEncode()}.{signature}";
+        return $"{encodingHeader}.{encodingPayload}.{signature}";
     }
 
 }
+
 
