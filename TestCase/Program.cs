@@ -29,24 +29,32 @@ public class Program
 
         string url = $"https://{_host}/api/testassignments/pan";
 
-        var protect = new Protected
-        {
-            alg = "HS256",
-            kid = _keyId,
-            signdate = DateTime.Now
-        };
+        Chilkat.JsonObject jwsProtHdr = new Chilkat.JsonObject();
+        jwsProtHdr.AppendString("alg", "HS256");
+        jwsProtHdr.AppendString("kid", _keyId);
+        jwsProtHdr.AppendString("signdate", DateTime.Now.ToString());
+        jwsProtHdr.AppendString("cty", "application/json");
 
-        string number = "4000001234567899";
+        Chilkat.Jws jws = new Chilkat.Jws();
+
+        int signatureIndex = 0;
+        jws.SetMacKey(signatureIndex, _sharedKey, "base64url");
+
+        jws.SetProtectedHeader(signatureIndex, jwsProtHdr);
+
+        bool bIncludeBom = false;
 
         var payload = new Payload
         {
-            CardInfo = new ()
+            CardInfo = new CardInfo
             {
-                Pan = number
+                Pan = "4000001234567899"
             }
         };
 
-        var jws = MakeJws(protect, payload, _sharedKey);
+        jws.SetPayload(JsonConvert.SerializeObject(payload), "utf-8", bIncludeBom);
+
+        string jwsCompact = jws.CreateJws();
 
         RestClient restClient = new(url);
 
@@ -65,29 +73,6 @@ public class Program
             Console.WriteLine("Successfully");
         }
     }
-
-    private static string MakeJws(object header, object payload, string secretKey)
-    {
-        UTF8Encoding encoding = new UTF8Encoding();
-
-        var headJson = JsonConvert.SerializeObject(header);
-        var payloadJson = JsonConvert.SerializeObject(payload);
-
-        var encodingHeader = encoding.GetBytes(headJson).Base64UrlEncode();
-        var encodingPayload = payloadJson.Base64UrlEncode();
-
-        var sign = new Signature
-        {
-            Base64Header = encodingHeader,
-            Base64Payload = encodingPayload,
-            SecretKey = secretKey
-        };
-
-        var signature = sign.GenerateSignature();
-
-        return $"{encodingHeader}.{encodingPayload}.{signature}";
-    }
-
 }
 
 
