@@ -5,20 +5,34 @@ using RestSharp.Serializers.NewtonsoftJson;
 using System;
 using System.Text;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
+using PIHelperSh.Configuration.Attributes;
+using PIHelperSh.Configuration;
 
+[TrackedType]
 public class Program
 {
+    [Constant(BlockName = "AppConfig", ConstantName = "HOST")]
+    private static string _host { get; set; } = string.Empty;
+
+    [Constant(BlockName = "AppConfig", ConstantName = "KEYID")]
+    private static string _keyId { get; set; } = string.Empty;
+
+    [Constant(BlockName = "AppConfig", ConstantName = "SHAREDKEY")]
+    private static string _sharedKey { get; set; } = string.Empty;
+
     public static void Main(string[] args)
     {
-        string host = "acstopay.online";
-        string url = $"https://{host}/api/testassignments/pan";
-        string KeyID = "47e8fde35b164e888a57b6ff27ec020f";
-        string SharedKey = "ac/1LUdrbivclAeP67iDKX2gPTTNmP0DQdF+0LBcPE/3NWwUqm62u5g6u+GE8uev5w/VMowYXN8ZM+gWPdOuzg==";
+        IConfiguration config = new ConfigurationBuilder()
+           .AddJsonFile("appsettings.json")
+           .Build().AddConstants();
+
+        string url = $"https://{_host}/api/testassignments/pan";
 
         var protect = new Protected
         {
             alg = "HS256",
-            kid = KeyID,
+            kid = _keyId,
             signdate = DateTime.Now
         };
 
@@ -32,7 +46,7 @@ public class Program
             }
         };
 
-        var jws = MakeJws(protect, payload, SharedKey);
+        var jws = MakeJws(protect, payload, _sharedKey);
 
         RestClient restClient = new(url);
 
